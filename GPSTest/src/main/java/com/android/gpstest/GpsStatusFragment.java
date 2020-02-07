@@ -18,6 +18,7 @@
 package com.android.gpstest;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Typeface;
@@ -29,6 +30,7 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -85,9 +87,7 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
     private static final String EMPTY_LAT_LONG = "             ";
 
     @SuppressLint("SimpleDateFormat") // See #117
-    SimpleDateFormat mDateFormat = new SimpleDateFormat(
-            DateFormat.is24HourFormat(Application.get().getApplicationContext())
-                    ? "HH:mm:ss" : "hh:mm:ss a");
+    SimpleDateFormat mDateFormat;
 
     private Resources mRes;
 
@@ -127,9 +127,13 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
 
     private String mTtff = "";
 
-    private static final String METERS = Application.get().getResources().getStringArray(R.array.preferred_distance_units_values)[0];
+    /*private static final String METERS = Application.get().getResources().getStringArray(R.array.preferred_distance_units_values)[0];
     private static final String METERS_PER_SECOND = Application.get().getResources().getStringArray(R.array.preferred_speed_units_values)[0];
-    private static final String KILOMETERS_PER_HOUR = Application.get().getResources().getStringArray(R.array.preferred_speed_units_values)[1];
+    private static final String KILOMETERS_PER_HOUR = Application.get().getResources().getStringArray(R.array.preferred_speed_units_values)[1];*/
+
+    private static final String METERS = "1";
+    private static final String METERS_PER_SECOND = "1";
+    private static final String KILOMETERS_PER_HOUR = "2";
 
     String mPrefDistanceUnits;
     String mPrefSpeedUnits;
@@ -148,6 +152,16 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
     private final Observer<Pair<Integer, Integer>> mNumSignalsObserver = numSignalsUsedInViewPair -> {
         // TODO - add number of signals used and in view to UI
     };
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+
+        mDateFormat = new SimpleDateFormat(
+                DateFormat.is24HourFormat(getContext())
+                        ? "HH:mm:ss" : "hh:mm:ss a");
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -193,11 +207,12 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
         mFlagICAO = getResources().getDrawable(R.drawable.ic_flag_icao);
 
         mLocationCard = v.findViewById(R.id.status_location_card);
+        final Context context = getContext();
         mLocationCard.setOnClickListener(view -> {
             // Copy location to clipboard
             if (mLocation != null) {
-                boolean includeAltitude = Application.getPrefs().getBoolean(Application.get().getString(R.string.pref_key_share_include_altitude), false);
-                String coordinateFormat = Application.getPrefs().getString(Application.get().getString(R.string.pref_key_coordinate_format), Application.get().getString(R.string.preferences_coordinate_format_dd_key));
+                boolean includeAltitude = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.pref_key_share_include_altitude), false);
+                String coordinateFormat = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.pref_key_coordinate_format), context.getString(R.string.preferences_coordinate_format_dd_key));
                 String formattedLocation = UIUtils.formatLocationForDisplay(mLocation, null, includeAltitude,
                         null, null, null, coordinateFormat);
                 IOUtils.copyToClipboard(formattedLocation);
@@ -206,7 +221,7 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
         });
 
         // GNSS
-        LinearLayoutManager llmGnss = new LinearLayoutManager(getContext());
+        LinearLayoutManager llmGnss = new LinearLayoutManager(context);
         llmGnss.setAutoMeasureEnabled(true);
         llmGnss.setOrientation(RecyclerView.VERTICAL);
 
@@ -219,7 +234,7 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
         mGnssStatusList.setNestedScrollingEnabled(false);
 
         // SBAS
-        LinearLayoutManager llmSbas = new LinearLayoutManager(getContext());
+        LinearLayoutManager llmSbas = new LinearLayoutManager(context);
         llmSbas.setAutoMeasureEnabled(true);
         llmSbas.setOrientation(RecyclerView.VERTICAL);
 
@@ -231,7 +246,7 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
         mSbasStatusList.setLayoutManager(llmSbas);
         mSbasStatusList.setNestedScrollingEnabled(false);
 
-        GpsTestActivity.getInstance().addListener(this);
+        // TODO GpsTestActivity.getInstance().addListener(this);
 
         mViewModel = ViewModelProviders.of(getActivity()).get(DeviceInfoViewModel.class);
         mViewModel.getNumSatsUsedInViewPair().observe(getActivity(), mNumSatsObserver);
@@ -271,7 +286,7 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
     }
 
     private void updateFixTime() {
-        if (mFixTime == 0 || (GpsTestActivity.getInstance() != null && !GpsTestActivity.getInstance().mStarted)) {
+        if (mFixTime == 0){// || (GpsTestActivity.getInstance() != null && !GpsTestActivity.getInstance().mStarted)) {
             mFixTimeView.setText("");
         } else {
             mFixTimeView.setText(mDateFormat.format(mFixTime));
@@ -341,8 +356,8 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
     @Override
     public void onResume() {
         super.onResume();
-        GpsTestActivity gta = GpsTestActivity.getInstance();
-        setStarted(gta.mStarted);
+        //GpsTestActivity gta = GpsTestActivity.getInstance();
+        setStarted(true);//gta.mStarted);
 
         setupUnitPreferences();
     }
@@ -394,7 +409,7 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
         // Make sure TTFF is shown, if the TTFF is acquired before the mTTFFView is initialized
         mTTFFView.setText(mTtff);
 
-        String coordinateFormat = Application.getPrefs().getString(getString(R.string.pref_key_coordinate_format), getString(R.string.preferences_coordinate_format_dd_key));
+        String coordinateFormat = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(getString(R.string.pref_key_coordinate_format), getString(R.string.preferences_coordinate_format_dd_key));
         switch (coordinateFormat) {
             // Constants below must match string values in do_not_translate.xml
             case "dd":
@@ -404,13 +419,13 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
                 break;
             case "dms":
                 // Degrees minutes seconds
-                mLatitudeView.setText(UIUtils.getDMSFromLocation(Application.get(), location.getLatitude(), UIUtils.COORDINATE_LATITUDE));
-                mLongitudeView.setText(UIUtils.getDMSFromLocation(Application.get(), location.getLongitude(), UIUtils.COORDINATE_LONGITUDE));
+                mLatitudeView.setText(UIUtils.getDMSFromLocation(getContext(), location.getLatitude(), UIUtils.COORDINATE_LATITUDE));
+                mLongitudeView.setText(UIUtils.getDMSFromLocation(getContext(), location.getLongitude(), UIUtils.COORDINATE_LONGITUDE));
                 break;
             case "ddm":
                 // Degrees decimal minutes
-                mLatitudeView.setText(UIUtils.getDDMFromLocation(Application.get(), location.getLatitude(), UIUtils.COORDINATE_LATITUDE));
-                mLongitudeView.setText(UIUtils.getDDMFromLocation(Application.get(), location.getLongitude(), UIUtils.COORDINATE_LONGITUDE));
+                mLatitudeView.setText(UIUtils.getDDMFromLocation(getContext(), location.getLatitude(), UIUtils.COORDINATE_LATITUDE));
+                mLongitudeView.setText(UIUtils.getDDMFromLocation(getContext(), location.getLongitude(), UIUtils.COORDINATE_LONGITUDE));
                 break;
             default:
                 // Decimal degrees
@@ -702,13 +717,13 @@ public class GpsStatusFragment extends Fragment implements GpsTestListener {
     }
 
     private void setupUnitPreferences() {
-        SharedPreferences settings = Application.getPrefs();
-        Application app = Application.get();
+        final Context context = getContext();
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
 
         mPrefDistanceUnits = settings
-                .getString(app.getString(R.string.pref_key_preferred_distance_units_v2), METERS);
+                .getString(context.getString(R.string.pref_key_preferred_distance_units_v2), METERS);
         mPrefSpeedUnits = settings
-                .getString(app.getString(R.string.pref_key_preferred_speed_units_v2), METERS_PER_SECOND);
+                .getString(context.getString(R.string.pref_key_preferred_speed_units_v2), METERS_PER_SECOND);
     }
 
     /**

@@ -294,6 +294,7 @@ public class GpsTestActivity extends AppCompatActivity
         if (IOUtils.isShowRadarIntent(intent)) {
             recreateApp(intent);
         }
+        super.onNewIntent(intent);
     }
 
     /**
@@ -374,6 +375,8 @@ public class GpsTestActivity extends AppCompatActivity
                 }
             }
         }
+
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     /**
@@ -1380,7 +1383,20 @@ public class GpsTestActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         boolean success;
         // Handle menu item selection
-        switch (item.getItemId()) {
+        final int itemId = item.getItemId();
+        if (itemId == R.id.gps_switch)
+        {
+            return true;
+        } else if (itemId == R.id.share)
+        {
+            share();
+            return true;
+        } else
+        {
+            return super.onOptionsItemSelected(item);
+        }
+
+        /*switch (itemId) {
             case R.id.gps_switch:
                 return true;
             case R.id.share:
@@ -1388,7 +1404,7 @@ public class GpsTestActivity extends AppCompatActivity
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
-        }
+        }*/
     }
 
     public void onLocationChanged(Location location) {

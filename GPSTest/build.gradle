@@ -1,4 +1,4 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
@@ -22,13 +22,13 @@ android {
         google {
             // Google Play release using Google Play Services for maps
             dimension "map"
-            applicationId "com.android.gpstest"
+            //applicationId "com.android.gpstest"
         }
 
         osmdroid {
             // F-Droid release using osmdroid for maps
             dimension "map"
-            applicationId "com.android.gpstest.osmdroid"
+            //applicationId "com.android.gpstest.osmdroid"
         }
     }
 
@@ -75,18 +75,18 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            shrinkResources true
+            //shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
             signingConfig signingConfigs.release
         }
         // Append the version name to the end of aligned APKs
-        android.applicationVariants.all { variant ->
+        /*android.applicationVariants.all { variant ->
             if (variant.buildType.name == "release") {
                 variant.outputs.all { output ->
                     outputFileName = "${variant.name}-v${variant.versionName}.apk"
                 }
             }
-        }
+        }*/
     }
 
     compileOptions {
